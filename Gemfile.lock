@@ -86,7 +86,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activerecord
+  activerecord (>= 3.0, < 5.3)
   jeweler
   mysql2
   rspec
