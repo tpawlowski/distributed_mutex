@@ -8,7 +8,6 @@ begin
     s.description = %q{Framework for using a distributed mutex along with an implementation of a mutex stored on a MySQL database.}
     s.summary = %q{API for using a unique mutex across all instances of your application.}
     s.email = %q{birkirb@stoicviking.net}
-    s.has_rdoc = true
     s.homepage = %q{http://github.com/birkirb/distributed_mutex}
   end
 rescue LoadError
