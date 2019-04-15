@@ -27,7 +27,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
     threads = Array.new
     1.upto(3) do |number|
       threads << Thread.new(number) do |number|
-        con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+        con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
         MySQLMutex.synchronize('test', 5, con) do
           $output << number
         end
@@ -42,7 +42,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
   it 'should work with two excluding threads' do
     thread_1_mutex = nil
     thread_1 = Thread.new do
-      con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+      con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
       thread_1_mutex = MySQLMutex.new('test', 1, false, con)
       $output += "1-RUN"
       $output += "-LOCK" if thread_1_mutex.lock
@@ -51,7 +51,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
     thread_1.join
 
     thread_2 = Thread.new do
-      con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+      con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
       mutex = MySQLMutex.new('test', 1, false, con)
       $output += "-2-RUN"
       $output += "-LOCK" if mutex.lock
@@ -66,7 +66,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
     thread_1_mutex = nil
     thread_2_mutex = nil
 
-    con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+    con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
     thread_1_mutex_1 = MySQLMutex.new('test', 1, false, con)
 
     thread_1_mutex_1.lock.should == true
@@ -77,7 +77,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
     thread_1_mutex_2.unlock.should == true
 
     thread_2 = Thread.new do
-      con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+      con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
       thread_2_mutex = MySQLMutex.new('test', 1, false, con)
       thread_2_mutex.lock.should == false # Should still be locked.
     end
@@ -87,7 +87,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
   end
 
   it 'should not be released by a nested synchronized lock on the same connection' do
-    con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+    con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
     sub_thread_executed = false
     MySQLMutex.synchronize('test', 1, true, con) do
       MySQLMutex.synchronize('test', 1, false, con) do
@@ -95,7 +95,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
       end
 
       thread_2 = Thread.new do
-        con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+        con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
         MySQLMutex.synchronize('test', 1, false, con) do
           fail
         end
@@ -107,7 +107,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
   end
 
   it 'should released nested synchronized locks when an error occurs' do
-    con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+    con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
     sub_thread_executed = false
     begin
         lambda do
@@ -121,7 +121,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
         end.should raise_error(RuntimeError, 'TestError')
 
         thread_2 = Thread.new do
-          con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+          con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
           MySQLMutex.synchronize('test', 1, false, con) do
             sub_thread_executed = true
           end
@@ -141,7 +141,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
 
     begin
       thread_2 = Thread.new do
-        con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+        con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
         sleep 0.1
         MySQLMutex.synchronize('test', 1, true, con) do
           sub_thread_executed = true
@@ -149,7 +149,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
       end
 
       thread_1 = Thread.new do
-        con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+        con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
         MySQLMutex.synchronize('test', 1, true, con) do
           MySQLMutex.synchronize('test', 1, true, con) do
             sleep 3
@@ -164,7 +164,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
 
       thread_1.join
 
-      con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+      con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
       MySQLMutex.synchronize('test', 1, true, con) do
         final_thread_completed = true
       end
@@ -182,7 +182,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
 
     begin
       thread_2 = Thread.new do
-        con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+        con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
         sleep 0.1
         MySQLMutex.synchronize('test', 1, true, con) do
           raise 'Boom 2!'
@@ -190,7 +190,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
       end
 
       thread_1 = Thread.new do
-        con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+        con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
         MySQLMutex.synchronize('test', 1, true, con) do
           MySQLMutex.synchronize('test', 1, true, con) do
             sleep 3
@@ -207,7 +207,7 @@ describe MySQLMutex, 'with a lock on an open mysql connection' do
         thread_1.join
       end.should raise_error(RuntimeError, 'Boom 1!')
 
-      con = ActiveRecord::Base.mysql_connection(ActiveRecord::Base.configurations['test'])
+      con = ActiveRecord::Base.mysql2_connection(ActiveRecord::Base.configurations['test'])
       MySQLMutex.synchronize('test', 1, true, con) do
         final_thread_completed = true
       end

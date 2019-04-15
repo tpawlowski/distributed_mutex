@@ -1,7 +1,7 @@
 source :rubygems
 
-gem 'activerecord', '>= 2.3', '<3.0'
-gem 'mysql'
+gem 'activerecord'
+gem 'mysql2'
 
 group :development do
   gem "jeweler"
